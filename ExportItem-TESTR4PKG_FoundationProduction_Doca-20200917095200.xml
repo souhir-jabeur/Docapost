@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Export generator="IRIS" version="26" zv="IRIS for UNIX (Ubuntu Server LTS for x86-64) 2020.1 (Build 217_1U)" ts="2020-09-17 09:56:14">
+<Project name="EnsExportItem_2020-09-17 09-52-00_796+0" LastModified="2020-09-17 09:56:14.989442">
+  <ProjectDescription>Studio Project generated starting from Production Configuration Item 'TESTR4PKG.FoundationProduction : Doca' at 2020-09-17 09:52:00.796 UTC</ProjectDescription>
+  <Items>
+    <ProjectItem name="User.DocapostIdentité" type="CLS"></ProjectItem>
+    <ProjectItem name="User.DocapostRest" type="CLS"></ProjectItem>
+    <ProjectItem name="User.FluxIdentié" type="CLS"></ProjectItem>
+    <ProjectItem name="Settings:Doca.PTD" type="PTD"></ProjectItem>
+    <ProjectItem name="Settings:Docapost.Input.PTD" type="PTD"></ProjectItem>
+    <ProjectItem name="EnsExportNotes.EnsExportItem_2020-09-17 09-52-00_796+0.PTD" type="PTD"></ProjectItem>
+  </Items>
+</Project>
+
+
+<Class name="User.DocapostIdentité">
+<Super>Ens.BusinessOperation</Super>
+<TimeChanged>65639,35282.790536</TimeChanged>
+<TimeCreated>65638,41999.737208</TimeCreated>
+
+<Parameter name="ADAPTER">
+<Default>EnsLib.HTTP.OutboundAdapter</Default>
+</Parameter>
+
+<Property name="Adapter">
+<Type>EnsLib.HTTP.OutboundAdapter</Type>
+</Property>
+
+<Parameter name="INVOCATION">
+<Default>Queue</Default>
+</Parameter>
+
+<Method name="test">
+<FormalSpec>pInput:EnsLib.HL7.Message,*pOutput:%RegisteredObject</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try{
+			set y=pInput.RawContent
+			set tJSONFile = ##class(%DynamicObject).%New()
+			 set tJSONFile=$ZCONVERT(msg,"I","JSON")  
+			 $$$LOGINFO("final " _tJSONFile)
+        	 set dynObject1 = ##class(%DynamicObject).%New()
+        	 set dynObject1.message =tJSONFile
+        	 $$$LOGINFO("msg " _dynObject1.%ToJSON())
+		   	 set request=##class(%Net.HttpRequest).%New()
+		     Set HttpResponse=##class(%Net.HttpResponse).%New()
+		     Set request.ContentType=("application/json")
+		     Set request.ContentCharset="UTF-8"
+		     set request.SSLConfiguration="testwafik"
+		     Set request.Https = 1
+		     set token=^xx
+		     Set request.Authorization=("Bearer " _token)
+		     Set request.Server="www.rec2.docapost.io"
+		     do request.EntityBody.Write(dynObject1)
+		     Set status=request.Post("/hub/v2/api/caih/patientIdentityInfo")
+             Set Result = [].%FromJSON(request.HttpResponse.Data)
+             Set text = Result.%ToJSON()
+             $$$LOGINFO("test "_request.HttpResponse.StatusCode)
+              $$$LOGINFO("resulty" _text)
+              Quit:$$$ISERR(status)
+           	 $$$LOGINFO("res "_status)
+       } Catch ex {
+                    Set status= ex.AsStatus()
+       }
+         Quit 1
+]]></Implementation>
+</Method>
+
+<XData name="MessageMap">
+<Data><![CDATA[
+<MapItems>
+    <MapItem MessageType="EnsLib.HL7.Message">
+        <Method>test</Method>
+    </MapItem>
+</MapItems>
+]]></Data>
+</XData>
+</Class>
+
+
+<Class name="User.DocapostRest">
+<Super>Ens.BusinessService</Super>
+<TimeChanged>65632,36244.528462</TimeChanged>
+<TimeCreated>65624,31976.763295</TimeCreated>
+
+<Parameter name="ADAPTER">
+<Default>Ens.InboundAdapter</Default>
+</Parameter>
+
+<Parameter name="SETTINGS">
+<Default>TargetConfigNames,Query</Default>
+</Parameter>
+
+<Property name="TargetConfigNames">
+<Type>%String</Type>
+<Parameter name="MAXLEN" value="1000"/>
+</Property>
+
+<Method name="OnProcessInput">
+<FormalSpec>pInput:%RegisteredObject,*pOutput:%RegisteredObject</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+	try{
+		
+		   $$$LOGINFO("hello")
+		   
+		     Set request=##class(%Net.HttpRequest).%New()
+		     set HttpResponse=##class(%Net.HttpResponse).%New()
+		     set request.Authorization=("Basic ZTU1ODAyNzVmNzcyNDY2YTg5NDkyNWJlNDc3YzM5NjY6TWpnMllXTXlZemt0WWpaa1pTMDBZVGhoTFdFeU1EQXRPVEpqWm1Vd1kyTXdaR0kw")	
+		     set request.ContentType=("application/x-www-form-urlencoded")
+		     set request.SSLConfiguration="testwafik"
+		     set request.Https=1
+		     //set request.Port=443
+		     set request.Server="www.rec2.docapost.io"
+             Do request.InsertFormData("grant_type","client_credentials")
+             set status=request.Post("/hub/v2/oauth/token/")
+             $$$LOGINFO("test"_status)
+             Set Result = [].%FromJSON(request.HttpResponse.Data)
+            $$$LOGINFO("Data retrieved :"_Result.%ToJSON())
+            set token=Result.%Get("access_token")
+             set ^T("user","sjabeur") =token
+             set ^xx = ^T("user","sjabeur")
+             
+             $$$LOGINFO("token "_^xx)
+             Quit:$$$ISERR(status)
+       } Catch ex {
+                    Set status= ex.AsStatus()
+       }
+         Quit 1
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Class name="User.FluxIdentié">
+<Super>Ens.BusinessService</Super>
+<TimeChanged>65637,47338.907134</TimeChanged>
+<TimeCreated>65625,28223.058097</TimeCreated>
+
+<Parameter name="ADAPTER">
+<Default>Ens.InboundAdapter</Default>
+</Parameter>
+
+<Parameter name="SETTINGS">
+<Default>TargetConfigNames,Query</Default>
+</Parameter>
+
+<Property name="TargetConfigNames">
+<Type>%String</Type>
+<Parameter name="MAXLEN" value="1000"/>
+</Property>
+
+<Method name="OnProcessInput">
+<FormalSpec>pInput:%RegisteredObject,*pOutput:%RegisteredObject</FormalSpec>
+<ReturnType>%Status</ReturnType>
+<Implementation><![CDATA[
+			
+		
+	try{
+			
+			Set stream=##class(%Stream.FileCharacter).%New()
+			Set sc=stream.LinkToFile("/datadrive/home/SouhirJA/input/input.HL7")
+			While 'stream.AtEnd {
+			Set line=stream.Read()
+			set test=$REPLACE(line,$c(13,10),"/n")
+			}
+			$$$LOGINFO("le text2 "_test)
+        	
+        	 set dynObject1 = ##class(%DynamicObject).%New()
+        	 set dynObject1.message = test
+        	 $$$LOGINFO("le text3 "_dynObject1.%ToJSON())
+		   	 set request=##class(%Net.HttpRequest).%New()
+		     Set HttpResponse=##class(%Net.HttpResponse).%New()
+		     Set request.ContentType=("application/json")
+		     Set request.ContentCharset="UTF-8"
+		     set request.SSLConfiguration="testwafik"
+		     Set request.Https = 1
+		     set token=^xx
+		     Set request.Authorization=("Bearer " _token)
+		     Set request.Server="www.rec2.docapost.io"
+		     do request.EntityBody.Write(dynObject1.%ToJSON())
+		     Set status=request.Post("/hub/v2/api/caih/patientIdentityInfo")
+             Set Result = [].%FromJSON(request.HttpResponse.Data)
+             Set text = Result.%ToJSON()
+             $$$LOGINFO("test "_request.HttpResponse.StatusCode)
+              $$$LOGINFO("resulty" _text)
+              Quit:$$$ISERR(status)
+           	 $$$LOGINFO("res "_status)
+       } Catch ex {
+                    Set status= ex.AsStatus()
+                    $$$LOGINFO("res2 "_status)
+       }
+         Quit 1
+]]></Implementation>
+</Method>
+</Class>
+
+
+<Document name="EnsExportNotes.EnsExportItem_2020-09-17 09-52-00_796+0.PTD"><ProjectTextDocument name="EnsExportNotes.EnsExportItem_2020-09-17 09-52-00_796+0" description="Export Notes for export EnsExportItem_2020-09-17 09-52-00_796+0">
+<![CDATA[<Deployment>
+<Creation>
+<Machine>IRISDEV01.BRC35RDCW0WETDHB0F3U3PXPVB.PARX.INTERNAL.CLOUDAPP.NET</Machine>
+<Instance>IRISDEV01</Instance>
+<Namespace>TESTR4</Namespace>
+<SourceProduction>TESTR4PKG.FoundationProduction</SourceProduction>
+<Username>sjabeur</Username>
+<UTC>2020-09-17 09:56:14.988</UTC>
+</Creation>
+<Notes>
+</Notes>
+<Contents>
+<ExportProject>EnsExportItem_2020-09-17 09-52-00_796+0</ExportProject>
+<Item num="1">Settings:Doca.PTD</Item>
+<Item num="2">Settings:Docapost.Input.PTD</Item>
+<Item num="3">User.DocapostIdentité.CLS</Item>
+<Item num="4">User.DocapostRest.CLS</Item>
+<Item num="5">User.FluxIdentié.CLS</Item>
+</Contents>
+<ProductionClassInExport></ProductionClassInExport>
+</Deployment>
+
+]]></ProjectTextDocument>
+</Document>
+
+<Document name="Settings:Doca.PTD"><ProjectTextDocument name="Settings:Doca" description="Settings for Doca in Production TESTR4PKG.FoundationProduction">
+<![CDATA[<Item Name="Doca" Category="" ClassName="User.DocapostIdentité" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule=""></Item>
+]]></ProjectTextDocument>
+</Document>
+
+<Document name="Settings:Docapost.Input.PTD"><ProjectTextDocument name="Settings:Docapost.Input" description="Settings for Docapost.Input in Production TESTR4PKG.FoundationProduction">
+<![CDATA[<Item Name="Docapost.Input" Category="" ClassName="EnsLib.HL7.Service.FileService" PoolSize="1" Enabled="true" Foreground="false" Comment="" LogTraceEvents="false" Schedule=""><Setting Target="Host" Name="MessageSchemaCategory">2.5</Setting><Setting Target="Adapter" Name="FilePath">/datadrive/home/SouhirJA/input</Setting><Setting Target="Adapter" Name="FileSpec">*.HL7</Setting><Setting Target="Host" Name="TargetConfigNames">Doca</Setting></Item>
+]]></ProjectTextDocument>
+</Document></Export>
